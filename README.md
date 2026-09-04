@@ -134,3 +134,25 @@ N. Reissmann, J. C. Meyer, and M. Själander
 *"RVSDG: An Intermediate Representation for the Multi-Core Era"*
 Nordic Workshop on Multi-Core Computing (MCC), Nov. 2018.
 https://www.sjalander.com/research/pdf/sjalander-mcc2018.pdf
+
+## Docker setup
+
+A Docker-based development environment is available.
+Its supported is limited to the HLS backend.
+The Docker image contains all necessary tools, with a pre-built CIRCT distribution available in `/opt/circt` in the container.
+
+To build the Docker image (which may take a while to compile CIRCT), run the following command:
+```sh
+docker build -t jlm-hls .
+```
+
+To enter a temporary container with this repository mounted as a volume, run:
+```sh
+docker run --rm -it -v "$(pwd):/workspace/jlm" jlm-hls
+```
+
+To build JLM, run the following commands in the container:
+```sh
+./configure.sh --enable-hls=/opt/circt
+make -j$(nproc) all
+```
