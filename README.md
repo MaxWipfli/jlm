@@ -29,6 +29,14 @@ To build JLM, run the following commands in the container:
 make -j$(nproc) all
 ```
 
+## Address Queue Configuration
+
+The address queue configuration can be changed by psasing the `-J--addrq-config=<config>` option to `jhls`.
+Possible values for `<config>` are:
+- `none`: disables address queues entirely (*NoQ* mode from R-HLS paper)
+- `exact:<capacity>`: creates an address queue with the specified capacity
+The default configuration is `exact:10`, which matches the behavior of the original implementation.
+
 ## HLS Test Suite
 
 To run the HLS test suite, run the following commands in the container:
