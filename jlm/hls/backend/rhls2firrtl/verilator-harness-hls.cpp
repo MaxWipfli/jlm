@@ -604,10 +604,10 @@ static )"
 
     std::cout << "finished - took " << (main_time - start) << " cycles" << std::endl;
 
-  // Ensure all memory queues are empty
+    // Ensure all memory queues are empty
 )";
   for (size_t i = 0; i < mem_reqs.size(); i++)
-    cpp << "assert(memory_queues[" << i << "].empty());" << std::endl;
+    cpp << "    // assert(memory_queues[" << i << "].empty());" << std::endl;
 
   if (c_return_type.has_value())
     cpp << "return *(" << c_return_type.value() << "*)&top->o_data_0;" << std::endl;

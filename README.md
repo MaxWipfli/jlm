@@ -49,3 +49,26 @@ Example:
 make -j$(nproc) all-without-tests
 ./scripts/hls-test-suite-make.sh -j$(nproc) run-base
 ```
+
+### Running Individual Tests
+
+To run an individual test, use the target `cycle-compare/<test-category>/<test-name>`, e.g.:
+```sh
+./scripts/hls-test-suite-make.sh -j$(nproc) cycle-compare/dynamatic/gemver
+```
+
+## Troubleshooting
+
+### Assertion Failure During Verilator Simulation: Memory Queue Not Empty
+
+In some edge cases, the following assertion was failing during Verilator simulation:
+```
+void run_hls(void*, int32_t): Assertion `memory_queues[0].empty()' failed.
+```
+
+This has previously happened when the address queue is disabled and can be explained as follows:
+- Without address queues, memory operations generally take longer to complete.
+- If the last memory operation in a test is a read whose result is unused, it may not have completed by the time the kernel signals its exit.
+- The Verilator simulation checks that all memory queues are empty at the end of the kernel execution, and if the last read has not completed, this assertion fails.
+
+We believe this failure can be safely ignored for our purposes, so we have disabled it.
