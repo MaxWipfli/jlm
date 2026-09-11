@@ -5,8 +5,6 @@ ARG LLVM_VERSION=18
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/lib/llvm-${LLVM_VERSION}/bin:${PATH}
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
 # Keep the LLVM/MLIR packages in sync with the project's GitHub Actions.
 # apt.llvm.org's Jammy LLVM 18 repository is also the repository used by CI.
 # Like CI, expose both MLIR's versioned library filename and its unversioned
@@ -35,14 +33,16 @@ RUN apt-get update \
         libmlir-${LLVM_VERSION}-dev \
         llvm-${LLVM_VERSION}-dev \
         mlir-${LLVM_VERSION}-tools \
-    && if [[ ! -f /usr/lib/x86_64-linux-gnu/libMLIR.so ]]; then \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN if [ ! -f /usr/lib/x86_64-linux-gnu/libMLIR.so ]; then \
         ln -s /usr/lib/llvm-${LLVM_VERSION}/lib/libMLIR.so.${LLVM_VERSION}* \
             /usr/lib/x86_64-linux-gnu/; \
         ln -s /usr/lib/llvm-${LLVM_VERSION}/lib/libMLIR.so.${LLVM_VERSION}* \
             /usr/lib/x86_64-linux-gnu/libMLIR.so; \
-    fi \
-    && python3 -m pip install --no-cache-dir --break-system-packages "lit~=${LLVM_VERSION}.0" \
-    && rm -rf /var/lib/apt/lists/*
+    fi
+
+RUN python3 -m pip install --no-cache-dir --break-system-packages "lit~=${LLVM_VERSION}.0"
 
 # Build the CIRCT revision selected by scripts/build-circt.sh in a temporary build environment
 FROM base AS circt-builder
