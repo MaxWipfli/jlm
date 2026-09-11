@@ -399,6 +399,7 @@ public:
         OutputFormat_(OutputFormat::Firrtl),
         ExtractHlsFunction_(false),
         MemoryLatency_(10),
+        AddressQueueConfiguration_("exact:10"),
         dumpRvsdgGraphs_(false)
   {
     JLM_ASSERT(MemoryLatency_ > 0);
@@ -413,6 +414,7 @@ public:
   std::string HlsFunction_;
   bool ExtractHlsFunction_;
   size_t MemoryLatency_;
+  std::string AddressQueueConfiguration_;
   bool dumpRvsdgGraphs_;
 };
 

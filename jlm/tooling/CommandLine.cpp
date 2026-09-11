@@ -259,6 +259,7 @@ JlmHlsCommandLineOptions::Reset() noexcept
   HlsFunction_ = "";
   ExtractHlsFunction_ = false;
   MemoryLatency_ = 10;
+  AddressQueueConfiguration_ = "exact:10";
 }
 
 void
@@ -1052,6 +1053,12 @@ JlmHlsCommandLineParser::ParseCommandLineArguments(int argc, const char * const 
       cl::desc("Memory latency"),
       cl::value_desc("latency"));
 
+  cl::opt<std::string> addressQueueConfiguration(
+      "addrq-config",
+      cl::init("exact:10"),
+      cl::desc("Address queue configuration: none; exact:<depth> (default: exact:10)"),
+      cl::value_desc("config"));
+
   cl::opt<bool> extractHlsFunction(
       "extract",
       cl::Prefix,
@@ -1086,6 +1093,7 @@ JlmHlsCommandLineParser::ParseCommandLineArguments(int argc, const char * const 
   CommandLineOptions_.ExtractHlsFunction_ = extractHlsFunction;
   CommandLineOptions_.OutputFormat_ = format;
   CommandLineOptions_.dumpRvsdgGraphs_ = dumpRvsdgGraphs;
+  CommandLineOptions_.AddressQueueConfiguration_ = std::move(addressQueueConfiguration);
 
   if (latency < 1)
   {
