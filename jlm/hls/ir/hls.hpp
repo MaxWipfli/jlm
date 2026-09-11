@@ -6,6 +6,7 @@
 #ifndef JLM_HLS_IR_HLS_HPP
 #define JLM_HLS_IR_HLS_HPP
 
+#include <jlm/hls/ir/config.hpp>
 #include <jlm/llvm/ir/operators/Store.hpp>
 #include <jlm/llvm/ir/types.hpp>
 #include <jlm/rvsdg/control.hpp>
@@ -986,16 +987,23 @@ public:
 
   AddressQueueOperation(
       const std::shared_ptr<const llvm::PointerType> & pointerType,
-      size_t capacity,
+      AddressQueueConfig config,
       bool combinatorial)
       : SimpleOperation(CreateInTypes(pointerType), CreateOutTypes(pointerType)),
         combinatorial(combinatorial),
-        capacity(capacity)
-  {}
+        config(std::move(config))
+  {
+    if (this->config.type == AddressQueueConfig::Type::None)
+    {
+      throw std::invalid_argument("Cannot create an address queue with configuration 'none'");
+    }
+  }
 
   bool
   operator==(const Operation & other) const noexcept override
   {
+    // FIXME(mwipfli): Maybe this needs to change if we start using address queues with different
+    // configurations.
     auto ot = dynamic_cast<const AddressQueueOperation *>(&other);
     // check predicate and value
     return ot && *ot->argument(1) == *argument(1) && ot->narguments() == narguments();
@@ -1019,6 +1027,8 @@ public:
   std::string
   debug_string() const override
   {
+    // FIXME(mwipfli): Maybe this needs to change if we start using address queues with different
+    // configurations.
     if (combinatorial)
     {
       return "HLS_ADDR_QUEUE_COMB_" + argument(narguments() - 1)->debug_string();
@@ -1038,18 +1048,18 @@ public:
       jlm::rvsdg::Output & enq,
       jlm::rvsdg::Output & deq,
       bool combinatorial,
-      size_t capacity = 10)
+      AddressQueueConfig config)
   {
     return rvsdg::CreateOpNode<AddressQueueOperation>(
                { &check, &enq, &deq },
                std::dynamic_pointer_cast<const llvm::PointerType>(check.Type()),
-               capacity,
+               std::move(config),
                combinatorial)
         .output(0);
   }
 
   bool combinatorial;
-  size_t capacity;
+  AddressQueueConfig config;
 };
 
 class StateGateOperation final : public rvsdg::SimpleOperation

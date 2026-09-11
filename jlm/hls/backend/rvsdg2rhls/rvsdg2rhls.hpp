@@ -6,6 +6,7 @@
 #ifndef JLM_HLS_BACKEND_RVSDG2RHLS_RVSDG2RHLS_HPP
 #define JLM_HLS_BACKEND_RVSDG2RHLS_RVSDG2RHLS_HPP
 
+#include <jlm/hls/ir/config.hpp>
 #include <jlm/llvm/ir/operators/IntegerOperations.hpp>
 #include <jlm/llvm/ir/operators/operators.hpp>
 #include <jlm/llvm/ir/RvsdgModule.hpp>
@@ -25,7 +26,10 @@ is_constant(const rvsdg::Node * node)
 }
 
 std::unique_ptr<rvsdg::TransformationSequence>
-createTransformationSequence(rvsdg::DotWriter & dotWriter, bool dumpRvsdgGraphs);
+createTransformationSequence(
+    rvsdg::DotWriter & dotWriter,
+    bool dumpRvsdgGraphs,
+    const AddressQueueConfig & addressQueueConfiguration);
 
 void
 rvsdg2ref(llvm::LlvmRvsdgModule & rm, const util::FilePath & function_name);

@@ -355,7 +355,7 @@ separate_load_edge(
 }
 
 jlm::rvsdg::Output *
-process_loops(jlm::rvsdg::Output * state_edge)
+process_loops(jlm::rvsdg::Output * state_edge, const AddressQueueConfig & addressQueueConfig)
 {
   while (true)
   {
@@ -376,7 +376,7 @@ process_loops(jlm::rvsdg::Output * state_edge)
         // start of gamma
         for (size_t i = 0; i < sn->noutputs(); ++i)
         {
-          state_edge = process_loops(sn->output(i));
+          state_edge = process_loops(sn->output(i), addressQueueConfig);
         }
       }
       else if (jlm::rvsdg::is<jlm::hls::MuxOperation>(*op))
@@ -460,7 +460,8 @@ process_loops(jlm::rvsdg::Output * state_edge)
               *state_gate_addr_in->origin(),
               *store_addresses[j],
               *store_dequeues[j],
-              store_precedes[j]));
+              store_precedes[j],
+              addressQueueConfig));
         }
       }
     }
@@ -472,8 +473,13 @@ process_loops(jlm::rvsdg::Output * state_edge)
 }
 
 static void
-mem_queue(rvsdg::RvsdgModule & rvsdgModule)
+mem_queue(rvsdg::RvsdgModule & rvsdgModule, const AddressQueueConfig & addressQueueConfig)
 {
+  if (addressQueueConfig.type == AddressQueueConfig::Type::None)
+  {
+    return;
+  }
+
   const auto & graph = rvsdgModule.Rvsdg();
   const auto rootRegion = &graph.GetRootRegion();
   if (rootRegion->numNodes() != 1)
@@ -516,25 +522,26 @@ mem_queue(rvsdg::RvsdgModule & rvsdgModule)
       {
         // Process each state edge separately
         jlm::rvsdg::Output * stateEdge = entryNode->output(i);
-        process_loops(stateEdge);
+        process_loops(stateEdge, addressQueueConfig);
       }
       return;
     }
   }
   // There is no memory state splitter, so process the single state edge in the graph
-  process_loops(state_arg);
+  process_loops(state_arg, addressQueueConfig);
 }
 
 AddressQueueInsertion::~AddressQueueInsertion() noexcept = default;
 
-AddressQueueInsertion::AddressQueueInsertion()
-    : Transformation("AddressQueueInsertion")
+AddressQueueInsertion::AddressQueueInsertion(AddressQueueConfig addressQueueConfiguration)
+    : Transformation("AddressQueueInsertion"),
+      AddressQueueConfiguration_(std::move(addressQueueConfiguration))
 {}
 
 void
 AddressQueueInsertion::Run(rvsdg::RvsdgModule & rvsdgModule, util::StatisticsCollector &)
 {
-  mem_queue(rvsdgModule);
+  mem_queue(rvsdgModule, AddressQueueConfiguration_);
 }
 
 }

@@ -19,8 +19,14 @@ struct AddressQueueConfig final
     Exact
   };
 
-  Type type { Type::None };
-  int capacity { 0 };
+  Type type{ Type::None };
+  int capacity{ 0 };
+
+  static AddressQueueConfig
+  default_()
+  {
+    return { Type::Exact, 10 };
+  }
 
   static AddressQueueConfig
   parse(const std::string & string);

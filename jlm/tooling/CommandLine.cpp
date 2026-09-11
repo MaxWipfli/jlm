@@ -1056,7 +1056,7 @@ JlmHlsCommandLineParser::ParseCommandLineArguments(int argc, const char * const 
   cl::opt<std::string> addressQueueConfiguration(
       "addrq-config",
       cl::init("exact:10"),
-      cl::desc("Address queue configuration: none; exact:<depth> (default: exact:10)"),
+      cl::desc("Address queue configuration: none; exact:<capacity> (default: exact:10)"),
       cl::value_desc("config"));
 
   cl::opt<bool> extractHlsFunction(

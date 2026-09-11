@@ -1975,7 +1975,11 @@ RhlsToFirrtlConverter::MlirGenAddrQueue(const jlm::rvsdg::SimpleNode * node)
   auto body = module.getBodyBlock();
 
   auto op = dynamic_cast<const hls::AddressQueueOperation *>(&(node->GetOperation()));
-  auto capacity = op->capacity;
+
+  const auto & config = op->config;
+  if (config.type != hls::AddressQueueConfig::Type::Exact)
+      throw std::invalid_argument("MlirGenAddrQueue currently only supports generating AddressQueueOperation with Type::Exact");
+  auto capacity = (size_t)config.capacity;
 
   auto clock = GetClockSignal(module);
   auto reset = GetResetSignal(module);

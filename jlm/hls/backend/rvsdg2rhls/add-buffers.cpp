@@ -94,7 +94,7 @@ OptimizeAddrQ(rvsdg::SimpleNode * node)
   auto addrq = dynamic_cast<const AddressQueueOperation *>(&node->GetOperation());
   JLM_ASSERT(addrq);
   // place buffer on addr output
-  PlaceBuffer(node->output(0), addrq->capacity, true);
+  PlaceBuffer(node->output(0), addrq->config.capacity, true);
 }
 
 static void

@@ -371,7 +371,10 @@ rvsdg2ref(llvm::LlvmRvsdgModule & rhls, const util::FilePath & path)
 }
 
 std::unique_ptr<rvsdg::TransformationSequence>
-createTransformationSequence(rvsdg::DotWriter & dotWriter, const bool dumpRvsdgGraphs)
+createTransformationSequence(
+    rvsdg::DotWriter & dotWriter,
+    const bool dumpRvsdgGraphs,
+    const AddressQueueConfig & addressQueueConfiguration)
 {
   auto predicateCorrelation = std::make_shared<llvm::PredicateCorrelation>();
   auto deadNodeElimination = std::make_shared<llvm::DeadNodeElimination>();
@@ -391,7 +394,7 @@ createTransformationSequence(rvsdg::DotWriter & dotWriter, const bool dumpRvsdgG
   auto rhlsDeadNodeElimination = std::make_shared<RhlsDeadNodeElimination>();
   auto allocaNodeConversion = std::make_shared<AllocaNodeConversion>();
   auto streamConversion = std::make_shared<StreamConversion>();
-  auto addressQueueInsertion = std::make_shared<AddressQueueInsertion>();
+  auto addressQueueInsertion = std::make_shared<AddressQueueInsertion>(addressQueueConfiguration);
   auto memoryStateDecoupling = std::make_shared<MemoryStateDecoupling>();
   auto memoryConverter = std::make_shared<MemoryConverter>();
   auto nodeReduction = std::make_shared<llvm::NodeReduction>();
