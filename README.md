@@ -90,3 +90,8 @@ This has previously happened when the address queue is disabled and can be expla
 - The Verilator simulation checks that all memory queues are empty at the end of the kernel execution, and if the last read has not completed, this assertion fails.
 
 We believe this failure can be safely ignored for our purposes, so we have disabled it.
+
+## License
+
+This repository is licensed (with the exception of the `eval/` subdirectory) under the GNU Lesser General Public License (LGPL), version 2.1, as listed in the [COPYING](./COPYING) file.
+The `eval/` subdirectory is under the Apache License v2.0 with LLVM Exceptions (`Apache-2.0 WITH LLVM-exception`), as listed in the [eval/LICENSE](eval/LICENSE) file.
