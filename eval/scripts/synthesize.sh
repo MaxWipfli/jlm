@@ -7,19 +7,28 @@
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd -P )"
 source "$SCRIPT_DIR/dynamatic_utils.sh"
 
+set -euo pipefail
+
 # ============================================================================ #
 # Variable definitions
 # ============================================================================ #
 
 # Script arguments
-DYNAMATIC_DIR=$1
-OUTPUT_DIR=$2
-KERNEL_NAME=$3
-FULL_CLOCK=$4
-HALF_CLOCK=$5
+KERNEL_IDENT="$1"
+FULL_CLOCK="$2"
+
+# Directories
+EVAL_DIR="$(realpath "$SCRIPT_DIR/../")"
+ROOT_DIR="$(realpath "$SCRIPT_DIR/../../")"
+HLS_TEST_SUITE_DIR="$ROOT_DIR/usr/hls-test-suite"
+HLS_TEST_SUITE_BUILD_DIR="$HLS_TEST_SUITE_DIR/build"
+
+# Various
+KERNEL_NAME="$(basename "$KERNEL_IDENT")"
+HALF_CLOCK="$(awk -v fc="$FULL_CLOCK" 'BEGIN {printf "%.3f", fc/2}')"
 
 # Generated directories/files
-SYNTH_DIR="$OUTPUT_DIR/synth"
+SYNTH_DIR="$EVAL_DIR/build/$KERNEL_IDENT/synth"
 SYNTH_HDL_DIR="$SYNTH_DIR/hdl"
 F_REPORT="$SYNTH_DIR/report.txt"
 F_SCRIPT="$SYNTH_DIR/synthesize.tcl"
@@ -28,12 +37,6 @@ F_UTILIZATION_SYN="$SYNTH_DIR/utilization_post_syn.rpt"
 F_TIMING_SYN="$SYNTH_DIR/timing_post_syn.rpt"
 F_UTILIZATION_PR="$SYNTH_DIR/utilization_post_pr.rpt"
 F_TIMING_PR="$SYNTH_DIR/timing_post_pr.rpt"
-
-# Shortcuts
-HDL_DIR="$OUTPUT_DIR/hdl"
-
-# Resources directory
-RESOURCE_DIR="$DYNAMATIC_DIR/tools/backend/synth-resources"
 
 # ============================================================================ #
 # Synthesis flow
@@ -44,30 +47,21 @@ rm -rf "$SYNTH_DIR" && mkdir -p "$SYNTH_DIR"
 
 # Copy all synthesizable components to specific folder for Vivado
 mkdir -p "$SYNTH_HDL_DIR"
-cp "$HDL_DIR/"*.vhd "$SYNTH_HDL_DIR" 2> /dev/null
-cp "$HDL_DIR/"*.v "$SYNTH_HDL_DIR" 2> /dev/null
+cp "$HLS_TEST_SUITE_BUILD_DIR/$KERNEL_IDENT.hls.v" "$SYNTH_HDL_DIR"
+# FIXME: Add additional files from $HLS_TEST_SUITE_DIR/verilog_ops as needed
+# FIXME: How to handle floating-point kernels???
 
-# See if we should include any VHDL in the synthesis script
-READ_VHDL=""
-if ls "$HDL_DIR"/*.vhd 1> /dev/null 2>&1; then
-  cp "$HDL_DIR/"*.vhd "$SYNTH_HDL_DIR"
-  READ_VHDL="read_vhdl -vhdl2008 [glob $SYNTH_DIR/hdl/*.vhd]"
-fi
+READ_VERILOG="read_verilog [glob $SYNTH_HDL_DIR/*.v]"
 
-# See if we should include any Verilog in the synthesis script
-READ_VERILOG=""
-if ls "$HDL_DIR"/*.v 1> /dev/null 2>&1; then
-  cp "$HDL_DIR/"*.v "$SYNTH_HDL_DIR"
-  READ_VERILOG="read_verilog [glob $SYNTH_DIR/hdl/*.v]"
-fi
-
-# Source tcl resources
-READ_TCL=""
-if ls "$RESOURCE_DIR"/*.tcl 1> /dev/null 2>&1; then
-  for f in "$RESOURCE_DIR"/*.tcl; do
-    READ_TCL="$READ_TCL\nsource $f"
-  done
-fi
+# Only used for floating-point kernels, which are not currently supported
+# FIXME: Re-enable this
+# # Source tcl resources
+# READ_TCL=""
+# if ls "$RESOURCE_DIR"/*.tcl 1> /dev/null 2>&1; then
+#   for f in "$RESOURCE_DIR"/*.tcl; do
+#     READ_TCL="$READ_TCL\nsource $f"
+#   done
+# fi
 
 # Set vivado commands for vivado IPs for floating point operations
 VIVADO_CMDS="set vivado_ver [version -short]
@@ -81,7 +75,6 @@ if {[regexp -nocase {2015\.1.*} $vivado_ver match]} {
 echo -e \
 "set_param general.maxThreads 8
 $VIVADO_CMDS
-$READ_VHDL
 $READ_VERILOG
 $READ_TCL
 read_xdc "$F_PERIOD"
