@@ -46,7 +46,7 @@ F_TIMING_PR="timing_post_pr.rpt"
 rm -rf "$SYNTH_DIR" && mkdir -p "$SYNTH_DIR"
 cd "$SYNTH_DIR"
 
-READ_VERILOG="read_verilog [../hdl/*.v]\nread_verilog -sv [../hdl/*.sv]"
+READ_VERILOG="read_verilog -sv [glob ../hdl/*.{v,sv}]"
 
 # Only used for floating-point kernels, which are not currently supported
 # FIXME: Re-enable this
