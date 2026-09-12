@@ -20,53 +20,49 @@ FULL_CLOCK="$2"
 # Directories
 EVAL_DIR="$(realpath "$SCRIPT_DIR/../")"
 ROOT_DIR="$(realpath "$SCRIPT_DIR/../../")"
-HLS_TEST_SUITE_DIR="$ROOT_DIR/usr/hls-test-suite"
-HLS_TEST_SUITE_BUILD_DIR="$HLS_TEST_SUITE_DIR/build"
 
 # Various
-KERNEL_NAME="$(basename "$KERNEL_IDENT")"
+FULL_CLOCK="$(awk -v fc="$FULL_CLOCK" 'BEGIN {printf "%.3f", fc}')"
 HALF_CLOCK="$(awk -v fc="$FULL_CLOCK" 'BEGIN {printf "%.3f", fc/2}')"
+TOP_NAME="kernel_lambda_mod"
 
 # Generated directories/files
-SYNTH_DIR="$EVAL_DIR/build/$KERNEL_IDENT/synth"
-SYNTH_HDL_DIR="$SYNTH_DIR/hdl"
-F_REPORT="$SYNTH_DIR/report.txt"
-F_SCRIPT="$SYNTH_DIR/synthesize.tcl"
-F_PERIOD="$SYNTH_DIR/period_${FULL_CLOCK}.xdc"
-F_UTILIZATION_SYN="$SYNTH_DIR/utilization_post_syn.rpt"
-F_TIMING_SYN="$SYNTH_DIR/timing_post_syn.rpt"
-F_UTILIZATION_PR="$SYNTH_DIR/utilization_post_pr.rpt"
-F_TIMING_PR="$SYNTH_DIR/timing_post_pr.rpt"
+KERNEL_BUILD_DIR="$EVAL_DIR/build/$KERNEL_IDENT"
+SYNTH_DIR="$KERNEL_BUILD_DIR/synth"
+# relative to $SYNTH_DIR so they work on remote server as well
+F_REPORT="report.txt"
+F_SCRIPT="synthesize.tcl"
+F_PERIOD="period_${FULL_CLOCK}.xdc"
+F_UTILIZATION_SYN="utilization_post_syn.rpt"
+F_TIMING_SYN="timing_post_syn.rpt"
+F_UTILIZATION_PR="utilization_post_pr.rpt"
+F_TIMING_PR="timing_post_pr.rpt"
 
 # ============================================================================ #
 # Synthesis flow
 # ============================================================================ #
 
-# Reset simulation directory
+# Reset and enter simulation directory
 rm -rf "$SYNTH_DIR" && mkdir -p "$SYNTH_DIR"
+cd "$SYNTH_DIR"
 
-# Copy all synthesizable components to specific folder for Vivado
-mkdir -p "$SYNTH_HDL_DIR"
-cp "$HLS_TEST_SUITE_BUILD_DIR/$KERNEL_IDENT.hls.v" "$SYNTH_HDL_DIR"
-# FIXME: Add additional files from $HLS_TEST_SUITE_DIR/verilog_ops as needed
-# FIXME: How to handle floating-point kernels???
-
-READ_VERILOG="read_verilog [glob $SYNTH_HDL_DIR/*.v]"
+READ_VERILOG="read_verilog [../hdl/*.v]\nread_verilog -sv [../hdl/*.sv]"
 
 # Only used for floating-point kernels, which are not currently supported
 # FIXME: Re-enable this
-# # Source tcl resources
+# Source tcl resources
 # READ_TCL=""
 # if ls "$RESOURCE_DIR"/*.tcl 1> /dev/null 2>&1; then
 #   for f in "$RESOURCE_DIR"/*.tcl; do
 #     READ_TCL="$READ_TCL\nsource $f"
 #   done
 # fi
+READ_TCL=""
 
 # Set vivado commands for vivado IPs for floating point operations
 VIVADO_CMDS="set vivado_ver [version -short]
 set fpo_ver 7.1
-if {[regexp -nocase {2015\.1.*} $vivado_ver match]} {
+if {[regexp -nocase {2015\.1.*} \$vivado_ver match]} {
     set fpo_ver 7.0
 }
 "
@@ -78,7 +74,7 @@ $VIVADO_CMDS
 $READ_VERILOG
 $READ_TCL
 read_xdc "$F_PERIOD"
-synth_design -top $KERNEL_NAME -part xc7k160tfbg484-2 -no_iobuf -mode out_of_context
+synth_design -top $TOP_NAME -part xc7k160tfbg484-2 -no_iobuf -mode out_of_context
 report_utilization > $F_UTILIZATION_SYN
 report_timing > $F_TIMING_SYN
 opt_design
@@ -97,8 +93,5 @@ set_property HD.CLK_SRC BUFGCTRL_X0Y0 [get_ports clk]
 #set_input_delay 0 -clock CLK  [all_inputs]
 #set_output_delay 0 -clock CLK [all_outputs]" > "$F_PERIOD"
 
-echo_info "Created synthesis scripts"
-echo_info "Launching Vivado synthesis"
-cd "$SYNTH_DIR"
-vivado -mode tcl -source "$F_SCRIPT" > "$F_REPORT"
-exit_on_fail "Logic synthesis failed" "Logic synthesis succeeded"
+echo_info "Created synthesis scripts in $SYNTH_DIR"
+echo_info "Launch synthesis with the following command: vivado -mode tcl -source $F_SCRIPT > $F_REPORT"
