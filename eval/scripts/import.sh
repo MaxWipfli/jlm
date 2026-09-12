@@ -38,6 +38,12 @@ for module_name in $EXTRA_MODULE_NAMES; do
     cp "$module_file" "$KERNEL_HDL_DIR"
 done
 
+if grep -qrE "vivado_fadd_blocking|vivado_fmul_blocking" "$KERNEL_HDL_DIR"; then
+    # FIXME: Add support for floating-point adders/multipliers in the future
+    echo_fatal "Kernel '$KERNEL_IDENT' requires floating-point adders/multipliers which are not currently supported."
+    exit 1
+fi
+
 # Reset simulation directory
 rm -rf "$KERNEL_SIM_DIR" && mkdir -p "$KERNEL_SIM_DIR"
 
