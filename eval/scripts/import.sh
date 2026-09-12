@@ -24,6 +24,7 @@ HLS_TEST_SUITE_BUILD_DIR="$HLS_TEST_SUITE_DIR/build"
 
 KERNEL_BUILD_DIR="$EVAL_DIR/build/$KERNEL_IDENT"
 KERNEL_HDL_DIR="$KERNEL_BUILD_DIR/hdl"
+KERNEL_SIM_DIR="$KERNEL_BUILD_DIR/sim"
 
 # Reset HDL directory
 rm -rf "$KERNEL_HDL_DIR" && mkdir -p "$KERNEL_HDL_DIR"
@@ -34,7 +35,13 @@ GREP_PATTERN="op_HLS_BUF_|op_HLS_DEC_LOAD_|op_FP_|op_FPOP_|op_FpToSInt_|op_SIToF
 EXTRA_MODULE_NAMES=$(grep -Po "^[[:space:]]*\K($GREP_PATTERN)[^[:space:]]*" "$KERNEL_HDL_DIR/$KERNEL_NAME.hls.v" || true)
 for module_name in $EXTRA_MODULE_NAMES; do
     module_file="$(find "$HLS_TEST_SUITE_DIR/verilog_ops" -name "$module_name.sv" -print -quit)"
-    cp -v "$module_file" "$KERNEL_HDL_DIR"
+    cp "$module_file" "$KERNEL_HDL_DIR"
 done
+
+# Reset simulation directory
+rm -rf "$KERNEL_SIM_DIR" && mkdir -p "$KERNEL_SIM_DIR"
+
+# Copy simulation log file
+cp "$HLS_TEST_SUITE_BUILD_DIR/$KERNEL_IDENT.hls.log" "$KERNEL_SIM_DIR"
 
 echo_info "Imported files for kernel '$KERNEL_IDENT' in $KERNEL_HDL_DIR"
