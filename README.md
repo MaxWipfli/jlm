@@ -67,6 +67,16 @@ To run an individual test, use the target `cycle-compare/<test-category>/<test-n
 
 ## Troubleshooting
 
+### Missing Module Error During Verilator Simulation
+
+You may encounter an error similar to the following during Verilator simulation:
+```
+Cannot find file containing module: 'op_HLS_BUF_P_11_I64W_O64W'
+```
+
+This is caused by a missing pre-generated Verilog module for a (FIFO) buffer.
+These modules are generated from the Chisel standard library in various sizes and checked into the `hls-test-suite` repository (`usr/hls-test-suite/verilog_ops/{buffer,dec_load,float}`).
+
 ### Assertion Failure During Verilator Simulation: Memory Queue Not Empty
 
 In some edge cases, the following assertion was failing during Verilator simulation:
